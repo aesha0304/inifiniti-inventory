@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-
-@st.cache_data(show_spinner=False)
+st.write("✅ App loaded and running...")
+#@st.cache_data(show_spinner=False)
 def load_data():
     df = pd.read_excel("Infiniti Product ID.xlsx", skiprows=2)
     df.dropna(how="all", inplace=True)
