@@ -8,6 +8,31 @@ from google.oauth2.service_account import Credentials
 SPREADSHEET_ID = "1w5iRXmL_VGxKlY5G_XlmtaxRBkw_voR5TZlPUkpmR94"
 WORKSHEET_NAME = "Sheet1"
 
+def one_time_product_id_push():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_file("inventory-app-462520-075277afddb4.json", scopes=scope)
+    gc = gspread.authorize(creds)
+    worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(WORKSHEET_NAME)
+
+    data = worksheet.get_all_records()
+    df = pd.DataFrame(data)
+    df.dropna(how="all", inplace=True)
+    df.fillna("", inplace=True)
+
+    df = df[df['Product Description'].astype(str).str.strip() != '']
+
+    if 'Product ID' not in df.columns or df['Product ID'].astype(str).str.strip().eq("").all():
+        df.insert(0, 'Product ID', ['PID' + str(i).zfill(5) for i in range(1, len(df) + 1)])
+        worksheet.clear()
+        worksheet.update("A1", [df.columns.tolist()] + df.astype(str).values.tolist())
+        return True
+
+    return False
+
+pushed = one_time_product_id_push()
+if pushed:
+    st.success("✅ Product IDs pushed to Google Sheets (one-time only).")
+
 @st.cache_data
 def load_data():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
